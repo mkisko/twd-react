@@ -1,16 +1,22 @@
 import React, {useState} from 'react';
 import './App.scss';
-import MyMap from '../components/map/map';
 import LoginForm from '../components/loginForm/loginForm';
 import ForgetForm from '../components/forgerForm/forgetForm';
 import {Route, Switch, Redirect} from 'react-router-dom';
+import MainPage from "../components/mainPage/mainPage";
 
 const App = () => {
   const [isAuth, setAuth] = useState(false);
 
+  const exitFromProfile = () => {
+    setAuth(false);
+  };
+
   let routes = (
     <>
-      <Route path='/' exact component={MyMap}/>
+      <Route path='/'>
+        <MainPage exit={exitFromProfile}/>
+      </Route>
       <Redirect to='/'/>
     </>
   );
