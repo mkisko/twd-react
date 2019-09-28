@@ -57,7 +57,7 @@ export default class SimpleExample extends React.Component {
   };
 
   handleClick = (e) => {
-    if (this.state.creationMode) {
+    if (this.state.creationMode || this.props.newLine) {
       const {latlng} = e;
       const {lat, lng} = latlng;
       console.log(lat, lng);
@@ -66,13 +66,14 @@ export default class SimpleExample extends React.Component {
         newLat: lat,
         newLng: lng,
         createModalOpen: true,
-        creationMode: false
+        creationMode: false,
       })
     }
   };
 
   // TOGGLE INFO MODAL
   openInfoModal = (id) => {
+    this.props.setNewLine(false);
     this.setState({infoModalOpen: true, infoModalContentId: id, creationMode: false})
   };
 
@@ -112,7 +113,23 @@ export default class SimpleExample extends React.Component {
     this.setState({addLineId: null, addLayerId: null, addPointId: null, newLat: null, newLng: null});
   };
 
+  createLine = (form) => {
+    this.closeCreateModal();
+    this.props.setNewLine(false);
+
+    const date = Date.now();
+    const info = {...form, date};
+    const coord = {lat: this.state.newLat, lng: this.state.newLng};
+    const result = {
+      info,
+      coord,
+    };
+    this.props.addLine(result);
+    this.setState({addLineId: null, addLayerId: null, addPointId: null, newLat: null, newLng: null});
+  };
+
   render() {
+    console.log(this.props.newLine);
     const {layers} = this.props;
 
     const activeLayers = layers.filter(layer => layer.isActive);
@@ -181,7 +198,7 @@ export default class SimpleExample extends React.Component {
 
         <ShowInfoModal continueLine={this.continueLine} closeModal={this.closeInfoModal} info={pointInfo}
                        isOpen={this.state.infoModalOpen}/>
-        <CreateNewModal isOpen={this.state.createModalOpen} closeModal={this.closeCreateModal} submit={this.addToLine}/>
+        <CreateNewModal createLineMode={this.props.newLine} isOpen={this.state.createModalOpen} closeModal={this.closeCreateModal} submit={this.addToLine} createLine={this.createLine}/>
       </>
     );
   }

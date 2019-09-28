@@ -94,5 +94,21 @@ export default [
     text: 'Газовые сети',
     color: 'green',
     lines: {},
+  },
+
+  {
+    id: 'electricity',
+    isActive: false,
+    text: 'Электрические сети',
+    color: 'yellow',
+    lines: {},
+  },
+
+  {
+    id: 'warm',
+    isActive: false,
+    text: 'Тепловые сети',
+    color: 'red',
+    lines: {},
   }
 ];
