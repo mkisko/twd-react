@@ -1,0 +1,38 @@
+.spravka__header {
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 30px;
+
+  &__list {
+    display: flex;
+    align-items: center;
+    margin: 0;
+
+    &__item {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      margin-right: 25px;
+
+      & * {
+        cursor: pointer;
+      }
+
+      &_active {
+        .spravka__header__list__item__text {
+          color: #030532;
+        }
+      }
+
+      &__text {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 16px;
+        color: #6C6C6C;
+        margin-right: 5px;
+      }
+    }
+  }
+}

@@ -6,7 +6,7 @@ import {Route, Switch, Redirect} from 'react-router-dom';
 import MainPage from "../components/mainPage/mainPage";
 
 const App = () => {
-  const [isAuth, setAuth] = useState(false);
+  const [isAuth, setAuth] = useState(true);
 
   const exitFromProfile = () => {
     setAuth(false);
