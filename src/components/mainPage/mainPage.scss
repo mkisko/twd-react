@@ -13,6 +13,10 @@
   align-items: center;
   cursor: pointer !important;
 
+  &:hover * {
+    color: silver
+  }
+
   &__icon {
     color: white;
     font-size: 1.5rem;
@@ -65,5 +69,19 @@
   margin: 0;
   width: 100%;
   height: 100%;
-  border: 1px solid red;
+  position: relative;
+}
+
+.profile{
+  &-exit {
+    cursor: pointer;
+    background: #60637C;
+    color: white;
+    padding: 10px;
+
+    &:hover {
+      background: #50557c;
+      color: #f9ffef;
+    }
+  }
 }

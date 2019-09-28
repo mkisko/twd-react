@@ -24,6 +24,38 @@ const Spravka = () => {
     })
   };
 
+  const addPoint = (newPoint) => {
+    const {layerId, lineId, pointId, coord, info} = newPoint;
+    setFilterState((prev) => {
+      const newState = [...prev];
+      const currentLayerIndex = newState.findIndex(layer => layer.id === layerId);
+      const currentLayer = newState[currentLayerIndex];
+      const targetLine = currentLayer['lines'][lineId];
+      const startPointIndex = targetLine.findIndex(point => point.id === pointId);
+      const newPoint = {
+        id: `f${(+new Date()).toString(16)}`,
+        lineId,
+        layerId,
+        lat: coord.lat,
+        lng: coord.lng,
+        info,
+        history: []
+      };
+      console.log('startPointIndex', startPointIndex);
+      if (startPointIndex < targetLine.length / 2) {
+        targetLine.unshift(newPoint);
+      } else {
+        targetLine.push(newPoint);
+      }
+
+      return [
+        ...prev.slice(0, currentLayerIndex),
+        currentLayer,
+        ...prev.slice(currentLayerIndex + 1)
+      ];
+    })
+  };
+
   return (
     <>
       <div className='spravka__header'>
@@ -39,7 +71,7 @@ const Spravka = () => {
       <Content
         className='content'
       >
-        <MyMap layers={filterState}/>
+        <MyMap layers={filterState} addPoint={addPoint}/>
       </Content>
     </>
   );    

@@ -17,7 +17,7 @@ const {Header, Content, Sider} = Layout;
 
 const MainPage = ({exit}) => {
   const menu = (
-    <div style={{cursor: 'pointer', background: '#60637C', color: 'white', padding: '10px'}} onClick={exit}>
+    <div className='profile-exit' onClick={exit}>
       Выйти
     </div>
   );
