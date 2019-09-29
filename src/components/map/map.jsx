@@ -60,7 +60,6 @@ export default class SimpleExample extends React.Component {
     if (this.state.creationMode || this.props.newLine) {
       const {latlng} = e;
       const {lat, lng} = latlng;
-      console.log(lat, lng);
 
       this.setState({
         newLat: lat,
@@ -86,6 +85,7 @@ export default class SimpleExample extends React.Component {
   };
 
   closeCreateModal = () => {
+    this.props.setNewLine(false);
     this.setState({createModalOpen: false, addLineId: null, addPointId: null, addLayerId: null})
   };
 
@@ -129,7 +129,6 @@ export default class SimpleExample extends React.Component {
   };
 
   render() {
-    console.log(this.props.newLine);
     const {layers} = this.props;
 
     const activeLayers = layers.filter(layer => layer.isActive);
@@ -168,7 +167,6 @@ export default class SimpleExample extends React.Component {
 
     const markers = points.map(point => {
       const {lat, lng, id: pointId, info} = point;
-      // console.log(info);
       const position = [lat, lng];
       return (
         <Marker key={pointId} position={position} icon={getPointerIcon(info.status)}

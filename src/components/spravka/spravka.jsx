@@ -1,10 +1,11 @@
 import React, {useState} from 'react';
 import './spravka.scss';
-import {Layout, Badge} from "antd";
+import {Layout, Badge, Icon} from "antd";
 import MyMap from '../map/map';
 import FilterControl from "../ui/filterControl/filterControl";
 import layers from '../../utils/model';
 import {getCount} from "../../utils/getCount";
+import axios from 'axios';
 
 const {Header, Content, Sider} = Layout;
 
@@ -25,36 +26,41 @@ const Spravka = () => {
     })
   };
 
-  const addPoint = (newPoint) => {
+  const addPoint = async (newPoint) => {
     const {layerId, lineId, pointId, coord, info} = newPoint;
-    setFilterState((prev) => {
-      const newState = [...prev];
-      const currentLayerIndex = newState.findIndex(layer => layer.id === layerId);
-      const currentLayer = newState[currentLayerIndex];
-      const targetLine = currentLayer['lines'][lineId];
-      const startPointIndex = targetLine.findIndex(point => point.id === pointId);
-      const newPoint = {
-        id: `f${(+new Date()).toString(16)}`,
-        lineId,
-        layerId,
-        lat: coord.lat,
-        lng: coord.lng,
-        info,
-        history: []
-      };
-      console.log('startPointIndex', startPointIndex);
-      if (startPointIndex < targetLine.length / 2) {
-        targetLine.unshift(newPoint);
-      } else {
-        targetLine.push(newPoint);
+    const newP = {
+      id: `f${(+new Date()).toString(16)}`,
+      lineId,
+      layerId,
+      lat: coord.lat,
+      lng: coord.lng,
+      info,
+      history: []
+    };
+    const indexWithLayer = filterState.findIndex(layer => layer.id === layerId);
+    const line = filterState[indexWithLayer]['lines'][lineId];
+    const parentIdx = line.findIndex(point => point.id === pointId);
+    if (parentIdx > line.length / 2) {
+      line.push(newP);
+    } else {
+      line.unshift(newP);
+    }
+    const json = JSON.stringify(line);
+    const config = {
+      mode: 'no-cors',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
       }
+    };
+    try {
+      const response = await axios.post('http://cp-hack-back.profsoft.online/line/create', json, config);
+      const {data} = response;
+      console.log(data);
+    } catch (e) {
+      console.log(e);
+    }
 
-      return [
-        ...prev.slice(0, currentLayerIndex),
-        currentLayer,
-        ...prev.slice(currentLayerIndex + 1)
-      ];
-    })
   };
   
   const addLine = (form) => {
@@ -97,7 +103,7 @@ const Spravka = () => {
           })}
         </ul>
 
-        <button onClick={() => setNewLine(true)}>Add Line</button>
+        <button onClick={() => setNewLine(true)}><Icon style={{ fontSize: '24px', }} type="plus-square" /></button>
       </div>
 
       <Content

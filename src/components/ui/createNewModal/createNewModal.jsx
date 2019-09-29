@@ -4,7 +4,6 @@ import {Modal, Button, Input, Select} from 'antd';
 const {Option} = Select;
 
 const CreateNewModal = ({isOpen, closeModal, submit, createLineMode, createLine}) => {
-  console.log('createLineMode', createLineMode);
   const [form, changeForm] = useState({
     name: '',
     cat: '',
