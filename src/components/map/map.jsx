@@ -11,7 +11,7 @@ import CreateNewModal from "../ui/createNewModal/createNewModal";
 
 // const line = [[54.71323033228929, 20.546815395355228], [54.74959231046368, 20.501174926757816]];
 
-const getPointerIcon = (status) => {
+export const getPointerIcon = (status) => {
   let icon;
   switch (status) {
     case 'danger':

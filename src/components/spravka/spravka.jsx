@@ -1,17 +1,47 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import './spravka.scss';
 import {Layout, Badge, Icon} from "antd";
 import MyMap from '../map/map';
 import FilterControl from "../ui/filterControl/filterControl";
 import layers from '../../utils/model';
 import {getCount} from "../../utils/getCount";
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 
 const {Header, Content, Sider} = Layout;
 
+function fetchData(url, set) {
+  try {
+    const config = {
+      mode: 'no-cors',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    };
+    const response = axios.get(url, config);
+    const data = response.data;
+    set(data);
+    console.log(data);
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 const Spravka = () => {
-  const [filterState, setFilterState] = useState(layers);
+  const [filterState, setFilterState] = useState(null);
   const [newLine, setNewLine] = useState(false);
+
+  useEffect(() => {
+    axios.get('/index')
+      .then((response) => response.data)
+      .then(data => setFilterState(data))
+      .catch(err => console.log(err));
+    // setFilterState(layers)
+  }, []);
+
+  if (!filterState) {
+    return null;
+  }
 
   const changeFilter = (id) => () => {
     setFilterState((prevState) => {
@@ -37,32 +67,26 @@ const Spravka = () => {
       info,
       history: []
     };
-    const indexWithLayer = filterState.findIndex(layer => layer.id === layerId);
-    const line = filterState[indexWithLayer]['lines'][lineId];
-    const parentIdx = line.findIndex(point => point.id === pointId);
-    if (parentIdx > line.length / 2) {
-      line.push(newP);
-    } else {
-      line.unshift(newP);
-    }
-    const json = JSON.stringify(line);
-    const config = {
-      mode: 'no-cors',
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
+    setFilterState((p) => {
+      const layerIdx = p.findIndex(l => l.id === layerId);
+      const newState = {...p[layerIdx]};
+      const arr = newState['lines'][lineId];
+      const parentIdx = arr.findIndex(par => par.id === pointId);
+      if (parentIdx > arr.length / 2) {
+        newState['lines'][lineId].push(newP);
+      } else {
+        newState['lines'][lineId].unshift(newP);
       }
-    };
-    try {
-      const response = await axios.post('http://cp-hack-back.profsoft.online/line/create', json, config);
-      const {data} = response;
-      console.log(data);
-    } catch (e) {
-      console.log(e);
-    }
 
+      return [
+        ...p.slice(0, layerIdx),
+        newState,
+        ...p.slice(layerIdx + 1)
+      ];
+      console.log(newState);
+    });
   };
-  
+
   const addLine = (form) => {
     const {coord, info} = form;
     setFilterState((prev) => {
@@ -90,6 +114,8 @@ const Spravka = () => {
       ];
     });
   };
+  
+  // console.log(filterState);
 
   return (
     <>
@@ -103,7 +129,7 @@ const Spravka = () => {
           })}
         </ul>
 
-        <button onClick={() => setNewLine(true)}><Icon style={{ fontSize: '24px', }} type="plus-square" /></button>
+        <button onClick={() => setNewLine(true)}><Icon style={{fontSize: '24px',}} type="plus-square"/></button>
       </div>
 
       <Content

@@ -12,3 +12,28 @@
   height: 100%;
   background: #F5F5F5;
 }
+
+.tab-box {
+  padding: 0 10px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid silver;
+}
+
+.t-l {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+
+  color: #777777;
+  flex: 50%;
+}
+
+.t-r {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 13px;
+flex: 50%;
+  color: #000000;
+}

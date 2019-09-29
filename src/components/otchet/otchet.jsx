@@ -4,8 +4,10 @@ import 'leaflet/dist/leaflet.css';
 import {Map, TileLayer, Marker, Polyline} from 'react-leaflet';
 import L from 'leaflet';
 import FilterControl from "../ui/filterControl/filterControl";
-import {Layout, Slider, InputNumber} from "antd";
+import {Layout, Slider, InputNumber, Modal} from "antd";
 import otchet, {layers} from '../../utils/otchet';
+import {getPointerIcon} from "../map/map";
+import axios from '../../utils/axiosConfig';
 
 const {Content} = Layout;
 
@@ -13,14 +15,21 @@ const {Content} = Layout;
 class Otchet extends Component {
   state = {
     slider: {
-      budget: [10, 1000],
-      lifetime: [6, 600],
-      social: [1, 10000],
-      objects: [1, 100],
-      period: [2, 120],
+      budget: [0, 100],
+      lifetime: [0, 100],
+      social: [0, 100],
+      objects: [0, 100],
+      period: [0, 100],
     },
-    filterState: layers
+    filterState: null
   };
+
+  componentDidMount() {
+    axios.get('/short-index')
+      .then((response) => response.data)
+      .then(data => this.setState({filterState: data}))
+      .catch(err => console.log(err));
+  }
 
   onAfterChange = (id) => (value) => {
     this.setState((prev) => {
@@ -57,8 +66,13 @@ class Otchet extends Component {
   };
 
   render() {
+    if (!this.state.filterState) {
+      return null;
+    }
     // console.log(this.state.slider);
     const activeLayers = this.state.filterState.filter(layer => layer.isActive);
+    
+    console.log(activeLayers);
 
     const lines = activeLayers.flatMap(layer => {
       const {color, id, isActive, lines} = layer;
@@ -66,21 +80,28 @@ class Otchet extends Component {
         return {...line, color, id};
       })
     });
-    console.log('lines', lines);
     const filteredLines = lines.filter(line => {
       const {budget, lifetime, social, objects, period} = line;
-      return budget >= this.state['slider']['budget'][0]
-        && budget <= this.state.slider.budget[1]
-        && lifetime >= this.state.slider.lifetime[0]
-        && lifetime <= this.state.slider.lifetime[1]
-        && social >= this.state.slider.social[0]
-        && social <= this.state.slider.social[1]
-        && objects >= this.state.slider.objects[0]
-        && objects <= this.state.slider.objects[1]
-        && period >= this.state.slider.period[0]
-        && period <= this.state.slider.period[1]
+      return +budget > +this.state['slider']['budget'][0]
+        && +budget < +this.state.slider.budget[1]
+        && +lifetime > +this.state.slider.lifetime[0]
+        && +lifetime < +this.state.slider.lifetime[1]
+        && +social > +this.state.slider.social[0]
+        && +social < +this.state.slider.social[1]
+        && +objects > +this.state.slider.objects[0]
+        && +objects < +this.state.slider.objects[1]
+        && +period > +this.state.slider.period[0]
+        && +period < +this.state.slider.period[1]
     });
-    console.log('filteredLines', filteredLines);
+    const dots = filteredLines.map(line => {
+      return line.start || line.end;
+    });
+
+    const markers = dots.map((dot, idx) => {
+      return (
+        <Marker key={idx} position={dot} icon={getPointerIcon('warning')}>
+        </Marker>)
+    });
     return (
       <>
         <div className='spravka__header'>
@@ -102,6 +123,7 @@ class Otchet extends Component {
               <div style={{display: 'flex'}}>
                 <InputNumber
                   min={0}
+                  max={1000}
                   style={{marginRight: 5}}
                   value={(this.state.slider['budget'])[0]}
                   onChange={this.onChange('budget', 0)}
@@ -115,6 +137,7 @@ class Otchet extends Component {
                 />
                 <InputNumber
                   min={0}
+                  max={1000}
                   style={{marginLeft: 5}}
                   value={(this.state.slider['budget'])[1]}
                   onChange={this.onChange('budget', 1)}
@@ -227,7 +250,7 @@ class Otchet extends Component {
             </div>
 
           </div>
-          <MapWithFilter filteredLines={filteredLines}/>
+          <MapWithFilter slider={this.state.slider} filteredLines={filteredLines} markers={markers}/>
         </Content>
 
       </>
@@ -239,29 +262,103 @@ class MapWithFilter extends Component {
   state = {
     lat: 51.53606837416495,
     lng: 46.026490107178695,
-    zoom: 14
+    zoom: 14,
+
+    modal: {
+      isOpen: false,
+      cat: '',
+      long: '',
+      nodes: '',
+      width: '',
+      cost: ''
+    }
+  };
+
+  openModal = (cat,
+               long,
+               nodes,
+               width,
+               cost) => {
+    const modal = {
+      isOpen: true,
+      cat,
+      long,
+      nodes,
+      width,
+      cost
+    };
+    this.setState({modal});
+  };
+
+
+  closeModal = () => {
+    const modal = {
+      isOpen: false,
+      cat: '',
+      long: '',
+      nodes: '',
+      width: '',
+      cost: ''
+    };
+    this.setState({modal});
   };
 
   render() {
     const position = [this.state.lat, this.state.lng];
     return (
-      <Map className='otchet-map' center={position} zoom={this.state.zoom} maxZoom={17} onClick={(e) => {
-        const {latlng} = e;
-        const {lat, lng} = latlng;
-        console.log(lat, lng);
-      }}>
-        <TileLayer
-          attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-          url='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
-          maxZoom='17'
-          minZoom='1'
-        />
+      <>
+        <Map className='otchet-map' center={position} zoom={this.state.zoom} maxZoom={17} onClick={(e) => {
+          const {latlng} = e;
+          const {lat, lng} = latlng;
+        }}>
+          <TileLayer
+            attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+            url='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+            maxZoom='17'
+            minZoom='1'
+          />
 
-        {this.props.filteredLines.map((line, idx) => {
-          const {color, start, end} = line;
-          return <Polyline key={color + idx} positions={[start, end]} color={color} weight={5}/>
-        })}
-      </Map>
+          {this.props.filteredLines.map((line, idx) => {
+            const {color, start, end, cat, long, nodes, width, cost} = line;
+            return <Polyline key={color + idx} positions={[start, end]} color={color} weight={10}
+                             onClick={(e) => this.openModal(cat, long, nodes, width, cost)}/>
+          })}
+
+          {this.props.markers}
+        </Map>
+
+        <Modal visible={this.state.modal.isOpen} footer={false} onCancel={this.closeModal}>
+          <div className='tab-box' style={{padding: '5px 10px', display: 'flex'}}>
+            <p className='t-l'>Категория</p>
+            <p className='t-r'>{this.state.modal.cat}</p>
+          </div>
+
+          <div className='tab-box' style={{padding: '5px 10px', display: 'flex'}}>
+            <p className='t-l'>Протяженность</p>
+            <p className='t-r'>{this.state.modal.long}</p>
+          </div>
+
+          <div className='tab-box' style={{padding: '5px 10px', display: 'flex'}}>
+            <p className='t-l'>Количество узлов</p>
+            <p className='t-r'>{this.state.modal.nodes}</p>
+          </div>
+
+          <div className='tab-box' style={{padding: '5px 10px', display: 'flex'}}>
+            <p className='t-l'>Категория</p>
+            <p className='t-r'>{this.state.modal.cat}</p>
+          </div>
+
+          <div className='tab-box' style={{padding: '5px 10px', display: 'flex'}}>
+            <p className='t-l'>Пропускная способность</p>
+            <p className='t-r'>{this.state.modal.width}</p>
+          </div>
+
+          <div className='tab-box' style={{padding: '5px 10px', display: 'flex'}}>
+            <p className='t-l'>Стоимость ремонта</p>
+            <p className='t-r'>{this.state.modal.cost}</p>
+          </div>
+        </Modal>
+      </>
     )
   }
 }
